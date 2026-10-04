@@ -53,6 +53,27 @@ genSRootWithOneRootEq coeffA coeffB =
   in
     TwoRoot coeffA coeffB c' (Just x1') Nothing 
 
+genSRootWithTwoRootEq :: StdGen -> Integer -> Integer -> Integer -> Integer -> Equation
+genSRootWithTwoRootEq g coeffA coeffB maxA maxB =
+  let
+    candidates =
+      [ x'
+      | x' <- map (^2) [1 .. (abs maxA + abs maxB)]
+      , ((coeffB * coeffB) - x') `mod` (4 * coeffA) == 0
+      ]
+
+    (d, _) = case candidates of
+      [] -> error "нет подходящих кандидатов"
+      xs -> let (i, g') = randomR (0, length xs - 1) g
+            in (xs !! i, g')
+
+    coeffC = ((coeffB * coeffB) - d) `div` (4 * coeffA)
+
+    sqrtD = sqrt (fromIntegral d)
+    x1'   = (fromIntegral (negate coeffB) - sqrtD) / fromIntegral (2 * coeffA)
+    x2'   = (fromIntegral (negate coeffB) + sqrtD) / fromIntegral (2 * coeffA)
+  in
+    TwoRoot coeffA coeffB coeffC (Just x1') (Just x2') 
 
 
 genSecondRootEq :: StdGen -> Integer -> Integer -> Integer -> Integer -> Equation
@@ -65,4 +86,4 @@ genSecondRootEq g maxA maxB minA minB =
     case haveX of
       0 -> genSRootWithoutRootEq g3 a' b' maxA maxB
       1 -> genSRootWithOneRootEq  a' b'
-      otherwise -> 
+      otherwise -> genSRootWithTwoRootEq g3 a' b' maxA maxB
