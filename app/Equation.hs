@@ -1,6 +1,8 @@
-module Equation ( genOneRootEq ) where  
+module Equation ( genOneRootEq 
+                  , genSecondRootEq) where  
 
 import System.Random                    
+import Data.Ratio ((%), numerator, denominator)
 
 data Equation
   = OneRoot
@@ -53,37 +55,70 @@ genSRootWithOneRootEq coeffA coeffB =
   in
     TwoRoot coeffA coeffB c' (Just x1') Nothing 
 
-genSRootWithTwoRootEq :: StdGen -> Integer -> Integer -> Integer -> Integer -> Equation
-genSRootWithTwoRootEq g coeffA coeffB maxA maxB =
-  let
-    candidates =
-      [ x'
-      | x' <- map (^2) [1 .. (abs maxA + abs maxB)]
-      , ((coeffB * coeffB) - x') `mod` (4 * coeffA) == 0
-      ]
+niceDens :: [Integer]
+niceDens = [1, 2, 4, 5, 8, 10, 16, 20, 25]
 
-    (d, _) = case candidates of
-      [] -> error "нет подходящих кандидатов"
-      xs -> let (i, g') = randomR (0, length xs - 1) g
-            in (xs !! i, g')
+genNiceRoot :: StdGen -> Integer -> (Rational, StdGen)
+genNiceRoot g maxAbs =
+  let (di, g1) = randomR (0, length niceDens - 1) g
+      den      = niceDens !! di
+      (num, g2)= randomR (-maxAbs * den, maxAbs * den) g1
+  in (fromIntegral num % den, g2)
 
-    coeffC = ((coeffB * coeffB) - d) `div` (4 * coeffA)
+genSRootWithTwoRootEq
+  :: StdGen
+  -> Integer                     -- maxAbsRoot
+  -> (Integer, Integer)          -- a
+  -> (Integer, Integer)          -- b
+  -> (Integer, Integer)          -- c
+  -> Equation
+genSRootWithTwoRootEq g0 maxAbsRoot (minA, maxA) (minB, maxB) (minC, maxC) =
+  go g0 100  
+  where
+    go _ 0 = error "не удалось найти уравнение с заданными ограничениями"
+    go g attempts =
+      let
+        (r1, g1) = genNiceRoot g  maxAbsRoot
+        (r2, g2) = genNiceRoot g1 maxAbsRoot
 
-    sqrtD = sqrt (fromIntegral d)
-    x1'   = (fromIntegral (negate coeffB) - sqrtD) / fromIntegral (2 * coeffA)
-    x2'   = (fromIntegral (negate coeffB) + sqrtD) / fromIntegral (2 * coeffA)
-  in
-    TwoRoot coeffA coeffB coeffC (Just x1') (Just x2') 
+        -- (x - r1)(x - r2) = x² - (r1+r2)x + r1*r2
+        s = r1 + r2
+        p = r1 * r2
 
+        den = lcm (denominator s) (denominator p)
+        a0  = den
+        b0  = negate $ numerator (s * (den % 1))
+        c0  = numerator (p * (den % 1))
 
-genSecondRootEq :: StdGen -> Integer -> Integer -> Integer -> Integer -> Equation
-genSecondRootEq g maxA maxB minA minB =
+        (a, b, c) =
+          if a0 < 0 then (-a0, -b0, -c0) else (a0, b0, c0)
+
+        inRange x (lo, hi) = x >= lo && x <= hi
+
+      in
+        if inRange a (minA, maxA)
+           && inRange b (minB, maxB)
+           && inRange c (minC, maxC)
+           && a /= 0
+        then
+          TwoRoot a b c (Just $ fromRational r1) (Just $ fromRational r2)
+        else
+          go g2 (attempts - 1)
+
+genSecondRootEq
+  :: StdGen
+  -> Integer                     -- maxAbsRoot
+  -> (Integer, Integer)          -- a
+  -> (Integer, Integer)          -- b
+  -> (Integer, Integer)          -- c
+  -> Equation
+genSecondRootEq g maxAbsRoot (minA, maxA) (minB, maxB) (minC, maxC) =
   let 
     (a', g1) = randomR (minA, maxA) g
     (b', g2) = randomR (minB, maxB) g1
-    (haveX, g3) = randomR (1, 7) g2 :: (Int, StdGen)
+    (haveX, g3) = randomR (0, 7) g2 :: (Int, StdGen)
   in
     case haveX of
       0 -> genSRootWithoutRootEq g3 a' b' maxA maxB
-      1 -> genSRootWithOneRootEq  a' b'
-      otherwise -> genSRootWithTwoRootEq g3 a' b' maxA maxB
+      1 -> genSRootWithOneRootEq maxA maxB
+      otherwise -> genSRootWithTwoRootEq g3 maxAbsRoot (minA, maxA) (minB, maxB) (minC, maxC)
