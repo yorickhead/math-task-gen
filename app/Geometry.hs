@@ -129,4 +129,13 @@ data Circle = Circle {
   
   , square :: Float
   , lengthC :: Float
-}
+} deriving (Show)
+
+genCircleTask :: StdGen -> (Integer, Integer) -> Float -> Circle
+genCircleTask g rRange pi' = 
+  let 
+    (r, _ ) = randomR rRange g
+    sq = pi' * ( (fromInteger r)^2)
+    lengthC' = 2 * pi' * (fromInteger r)
+  in
+    Circle r sq lengthC'
