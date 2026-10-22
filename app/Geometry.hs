@@ -139,3 +139,10 @@ genCircleTask g rRange pi' =
     lengthC' = 2 * pi' * (fromInteger r)
   in
     Circle r sq lengthC'
+
+data Rectangle = Rectangle {
+  rectangleA :: Int,
+  rectangleB :: Int,
+  rectangleD :: Int
+}
+
