@@ -1,8 +1,8 @@
 module Main (main) where
-import Geometry (genTriangleTask)
+import Equation (equationToTask, genSecondRootEq)
 import System.Random (newStdGen)
 
 main :: IO ()
 main = do
     g <- newStdGen
-    putStrLn . show . genTriangleTask $ g
+    putStrLn . equationToTask $ (genSecondRootEq g 5 (-40, 40) (-40, 40) (-40, 40))
