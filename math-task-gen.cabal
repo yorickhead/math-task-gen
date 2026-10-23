@@ -19,7 +19,7 @@ common warnings
 executable math-task-gen
     import:           warnings
     main-is:          Main.hs
-    other-modules:    Equation
+    other-modules:    Equation, Geometry
     -- other-extensions:
     build-depends:    base ^>=4.20.2.0, random
     hs-source-dirs:   app
