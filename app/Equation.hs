@@ -1,5 +1,6 @@
 module Equation ( genOneRootEq 
-                  , genSecondRootEq) where  
+                  , genSecondRootEq
+                  , equationToTask) where  
 
 import System.Random                    
 import Data.Ratio ((%), numerator, denominator)
@@ -121,4 +122,13 @@ genSecondRootEq g maxAbsRoot (minA, maxA) (minB, maxB) (minC, maxC) =
     case haveX of
       0 -> genSRootWithoutRootEq g3 a' b' maxA maxB
       1 -> genSRootWithOneRootEq maxA maxB
-      otherwise -> genSRootWithTwoRootEq g3 maxAbsRoot (minA, maxA) (minB, maxB) (minC, maxC)
+      _ -> genSRootWithTwoRootEq g3 maxAbsRoot (minA, maxA) (minB, maxB) (minC, maxC)
+
+getS :: Integer -> String
+getS x' 
+      | x' > 0 = "+ " ++ (show x')
+      | x' < 0 = "- " ++ (show . abs $ x')
+      | otherwise = []
+
+equationToTask :: Equation -> String
+equationToTask eq = (show . a $ eq) ++ "x^2 " ++ (getS . b $ eq) ++ "x " ++ (getS . c $ eq)
